@@ -14,6 +14,7 @@ if len(physical_devices) > 0:
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 from tensorflow.compat.v1 import ConfigProto # DeepSORT official implementation uses tf1.x so we have to do some modifications to avoid errors
 
@@ -113,6 +114,10 @@ class YOLOv7_DeepSORT:
             out = cv2.VideoWriter(output, codec, fps, (width, height))
 
         frame_num = 0
+        fig = plt.figure()
+        ims = []
+        group = []
+        Group = []
         while True: # while video is running
             return_value, frame = vid.read()
             if not return_value:
@@ -173,6 +178,7 @@ class YOLOv7_DeepSORT:
 
             coord_set = []
             coord_list = []
+            box_list = []
 
             for track in self.tracker.tracks:  # update new findings AKA tracks
                 if not track.is_confirmed() or track.time_since_update > 1:
@@ -185,6 +191,8 @@ class YOLOv7_DeepSORT:
                 cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), color, 2)
                 cv2.rectangle(frame, (int(bbox[0]), int(bbox[1]-30)), (int(bbox[0])+(len(class_name)+len(str(track.track_id)))*17, int(bbox[1])), color, -1)
                 cv2.putText(frame, class_name + " : " + str(track.track_id),(int(bbox[0]), int(bbox[1]-11)),0, 0.6, (255,255,255),1, lineType=cv2.LINE_AA)
+                tmp = [bbox[0], bbox[1], bbox[2], bbox[3], int(track.track_id)]
+                box_list.append(tmp)
 
                 x = (int(bbox[0]) + int(bbox[2])) / 2
                 y = int(bbox[1])
@@ -198,10 +206,84 @@ class YOLOv7_DeepSORT:
                 u, v, z, t_id = cs
                 x = (u - K[0][2] * 1) / K[0][0] * 100
                 y = (v - K[1][2] * 1) / K[1][1] * 100
-                  
                 coord_list.append([x, y, t_id])
             
-            print(coord_list)
+            if len(coord_list) > 0:
+                x, y, person_id = zip(*coord_list)
+                im = plt.plot(x, y, linestyle='None', marker='o', color="black")
+                plt.gca().invert_yaxis()
+                ims.append(im)
+
+                # とりあえずここで座標間距離でグループを発見
+                for i in range(len(coord_list) - 1):
+                  for j in range(i + 1, len(coord_list)):
+                    if abs(coord_list[i][0] - coord_list[j][0]) < 6:
+                      if abs(coord_list[i][1] - coord_list[j][1]) < 6:
+                        if len(group) == 0:
+                          tmp = [coord_list[i][2], coord_list[j][2], 1]
+                          group.append(tmp)
+                          break
+                        else:
+                          flag = False
+                          for k in range(len(group)):
+                            if group[k][0] == coord_list[i][2]:
+                              if group[k][1] == coord_list[j][2]:
+                                flag = True
+                                group[k][2] += 1
+                                break
+                    
+                          if flag == False:
+                            for k in range(len(group)):
+                              if group[k][0] != coord_list[i][2]:
+                                if group[k][1] != coord_list[j][2]:
+                                  tmp = [coord_list[i][2], coord_list[j][2], 1]
+                                  group.append(tmp)
+                                  break
+                                else:
+                                  tmp = [coord_list[i][2], coord_list[j][2], 1]
+                                  group.append(tmp)
+                                  break
+                              else:
+                                tmp = [coord_list[i][2], coord_list[j][2], 1]
+                                group.append(tmp)
+                                break
+
+                for l in range(len(group)):
+                  if group[l][2] > 10:
+                    flag = True
+                    if len(Group) == 0:
+                      tmp = [group[l][0], group[l][1]]
+                      Group.append(tmp)
+                      print("ID '" + str(group[l][0]) + "' and ID '" + str(group[l][1]) + "' are group!")
+                      flag = False
+                    else:
+                      for i in range(len(Group)):
+                        if group[l][0] == Group[i][0] and group[l][1] == Group[i][1]:
+                          flag = False
+                          break
+              
+                    if flag == True:
+                      tmp = [group[l][0], group[l][1]]
+                      Group.append(tmp)
+                      print("ID '" + str(group[l][0]) + "' and ID '" + str(group[l][1]) + "' are group!")
+
+                print(Group)
+
+                ########### ここにcv.rectangleでグループを囲む記述を書く ############
+                for i in range(len(box_list) - 1):
+                  for j in range(i + 1, len(box_list)):
+                    for k in range(len(Group)):
+                      if Group[k][0] == box_list[i][4] and Group[k][1] == box_list[j][4]:
+                        if int(box_list[i][0]) < int(box_list[j][0]): # box_list[i]がbox_list[j]より左にあるとき
+                          if int(box_list[i][1]) < int(box_list[j][1]): # box_list[i]がbox_list[j]より下にあるとき
+                            cv2.rectangle(frame, (int(box_list[i][0]), int(box_list[j][1])), (int(box_list[j][2]), int(box_list[i][3])), (0, 255, 255), 2)
+                          else:
+                            cv2.rectangle(frame, (int(box_list[i][0]), int(box_list[i][1])), (int(box_list[j][2]), int(box_list[j][3])), (0, 255, 255), 2)
+                        else:
+                          if int(box_list[i][1]) < int(box_list[j][1]): # box_list[i]がbox_list[j]より下にあるとき
+                            cv2.rectangle(frame, (int(box_list[j][0]), int(box_list[j][1])), (int(box_list[i][2]), int(box_list[i][3])), (0, 255, 255), 2)
+                          else:
+                            cv2.rectangle(frame, (int(box_list[j][0]), int(box_list[i][1])), (int(box_list[i][2]), int(box_list[j][3])), (0, 255, 255), 2)
 
             if verbose >= 1:
                 fps = 1.0 / (time.time() - start_time) # calculate frames per second of running detections
@@ -218,5 +300,9 @@ class YOLOv7_DeepSORT:
             if show_live:
                 cv2.imshow("Output Video", result)
                 if cv2.waitKey(1) & 0xFF == ord('q'): break
+
+        ani = animation.ArtistAnimation(fig, ims, interval=50)
+        ani.save('anim.mp4', writer="ffmpeg")
+        plt.show()
         
         cv2.destroyAllWindows()
