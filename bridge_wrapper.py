@@ -274,16 +274,17 @@ class YOLOv7_DeepSORT:
                   for j in range(i + 1, len(box_list)):
                     for k in range(len(Group)):
                       if Group[k][0] == box_list[i][4] and Group[k][1] == box_list[j][4]:
-                        if int(box_list[i][0]) < int(box_list[j][0]): # box_list[i]がbox_list[j]より左にあるとき
-                          if int(box_list[i][1]) < int(box_list[j][1]): # box_list[i]がbox_list[j]より下にあるとき
-                            cv2.rectangle(frame, (int(box_list[i][0]), int(box_list[j][1])), (int(box_list[j][2]), int(box_list[i][3])), (0, 255, 255), 2)
+                        if abs(box_list[i][0] - box_list[j][0]) < 50 and abs(box_list[i][1] - box_list[j][1]) < 100: # 大きすぎる矩形を防止
+                          if int(box_list[i][0]) < int(box_list[j][0]): # box_list[i]がbox_list[j]より左にあるとき
+                            if int(box_list[i][1]) < int(box_list[j][1]): # box_list[i]がbox_list[j]より下にあるとき
+                              cv2.rectangle(frame, (int(box_list[i][0]), int(box_list[j][1])), (int(box_list[j][2]), int(box_list[i][3])), (0, 255, 255), 2)
+                            else:
+                              cv2.rectangle(frame, (int(box_list[i][0]), int(box_list[i][1])), (int(box_list[j][2]), int(box_list[j][3])), (0, 255, 255), 2)
                           else:
-                            cv2.rectangle(frame, (int(box_list[i][0]), int(box_list[i][1])), (int(box_list[j][2]), int(box_list[j][3])), (0, 255, 255), 2)
-                        else:
-                          if int(box_list[i][1]) < int(box_list[j][1]): # box_list[i]がbox_list[j]より下にあるとき
-                            cv2.rectangle(frame, (int(box_list[j][0]), int(box_list[j][1])), (int(box_list[i][2]), int(box_list[i][3])), (0, 255, 255), 2)
-                          else:
-                            cv2.rectangle(frame, (int(box_list[j][0]), int(box_list[i][1])), (int(box_list[i][2]), int(box_list[j][3])), (0, 255, 255), 2)
+                            if int(box_list[i][1]) < int(box_list[j][1]): # box_list[i]がbox_list[j]より下にあるとき
+                              cv2.rectangle(frame, (int(box_list[j][0]), int(box_list[j][1])), (int(box_list[i][2]), int(box_list[i][3])), (0, 255, 255), 2)
+                            else:
+                              cv2.rectangle(frame, (int(box_list[j][0]), int(box_list[i][1])), (int(box_list[i][2]), int(box_list[j][3])), (0, 255, 255), 2)
 
             if verbose >= 1:
                 fps = 1.0 / (time.time() - start_time) # calculate frames per second of running detections
