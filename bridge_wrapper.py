@@ -31,7 +31,36 @@ from detection_helpers import *
 config = ConfigProto()
 config.gpu_options.allow_growth = True
 
+# カメラの視野角（水平方向）
+fov = 90
+# スクリーンの画素数（横）
+pw = 1438
+# スクリーンの画素数（縦）
+ph = 808
+# カメラ情報（内部パラメータ）
+cam_info = (fov, pw, ph)
 
+import numpy as np
+from numpy import sin, cos, tan
+
+def calc_K(fov_x, pixel_w, pixel_h, cx=None, cy=None):
+    if cx is None:
+        cx = pixel_w / 2.0
+    if cy is None:
+        cy = pixel_h / 2.0
+
+    fx = 1.0 / (2.0 * tan(np.radians(fov_x) / 2.0)) * pixel_w
+    fy = fx
+
+    K = np.asarray([
+        [fx, 0, cx, 0],
+        [0, fy, cy, 0],
+        [0, 0, 1, 0],
+    ])
+
+    return K
+
+K = calc_K(*cam_info)
 
 class YOLOv7_DeepSORT:
     '''
@@ -60,7 +89,6 @@ class YOLOv7_DeepSORT:
 
 
     def track_video(self,video:str, output:str, skip_frames:int=0, show_live:bool=False, count_objects:bool=False, verbose:int = 0):
-        print("test")
         '''
         Track any given webcam or video
         args: 
@@ -143,6 +171,9 @@ class YOLOv7_DeepSORT:
             self.tracker.predict()  # Call the tracker
             self.tracker.update(detections) #  updtate using Kalman Gain
 
+            coord_set = []
+            coord_list = []
+
             for track in self.tracker.tracks:  # update new findings AKA tracks
                 if not track.is_confirmed() or track.time_since_update > 1:
                     continue 
@@ -153,16 +184,31 @@ class YOLOv7_DeepSORT:
                 color = [i * 255 for i in color]
                 cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), color, 2)
                 cv2.rectangle(frame, (int(bbox[0]), int(bbox[1]-30)), (int(bbox[0])+(len(class_name)+len(str(track.track_id)))*17, int(bbox[1])), color, -1)
-                cv2.putText(frame, class_name + " : " + str(track.track_id),(int(bbox[0]), int(bbox[1]-11)),0, 0.6, (255,255,255),1, lineType=cv2.LINE_AA)    
+                cv2.putText(frame, class_name + " : " + str(track.track_id),(int(bbox[0]), int(bbox[1]-11)),0, 0.6, (255,255,255),1, lineType=cv2.LINE_AA)
+
+                x = (int(bbox[0]) + int(bbox[2])) / 2
+                y = int(bbox[1])
+                coord_set.append([x, y, 1, int(track.track_id)])
 
                 if verbose == 2:
                     print("Tracker ID: {}, Class: {},  BBox Coords (xmin, ymin, xmax, ymax): {}".format(str(track.track_id), class_name, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))))
                     
             # -------------------------------- Tracker work ENDS here -----------------------------------------------------------------------
+            for cs in coord_set:
+                u, v, z, t_id = cs
+                x = (u - K[0][2] * 1) / K[0][0] * 100
+                y = (v - K[1][2] * 1) / K[1][1] * 100
+                  
+                coord_list.append([x, y, t_id])
+            
+            print(coord_list)
+
             if verbose >= 1:
                 fps = 1.0 / (time.time() - start_time) # calculate frames per second of running detections
-                if not count_objects: print(f"Processed frame no: {frame_num} || Current FPS: {round(fps,2)}")
-                else: print(f"Processed frame no: {frame_num} || Current FPS: {round(fps,2)} || Objects tracked: {count}")
+                if not count_objects: 
+                  print(f"Processed frame no: {frame_num} || Current FPS: {round(fps,2)}")
+                else: 
+                  print(f"Processed frame no: {frame_num} || Current FPS: {round(fps,2)} || Objects tracked: {count}")
             
             result = np.asarray(frame)
             result = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
