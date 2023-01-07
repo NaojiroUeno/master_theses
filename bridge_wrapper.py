@@ -60,6 +60,7 @@ class YOLOv7_DeepSORT:
 
 
     def track_video(self,video:str, output:str, skip_frames:int=0, show_live:bool=False, count_objects:bool=False, verbose:int = 0):
+        print("test")
         '''
         Track any given webcam or video
         args: 
