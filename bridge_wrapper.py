@@ -334,7 +334,7 @@ class YOLOv7_DeepSORT:
                             flag_not = True
                 
                         if flag_not == False:
-                          #if abs(box_list[i][0] - box_list[j][0]) < 50 and abs(box_list[i][1] - box_list[j][1]) < 100: # 大きすぎる矩形を防止
+                          if abs(box_list[i][0] - box_list[j][0]) < 50 and abs(box_list[i][1] - box_list[j][1]) < 100: # 大きすぎる矩形を防止
                             if int(box_list[i][0]) < int(box_list[j][0]): # box_list[i]がbox_list[j]より左にあるとき
                               if int(box_list[i][1]) > int(box_list[j][1]): # box_list[i]がbox_list[j]より下にあるとき
                                 cv2.rectangle(frame, (int(box_list[i][0]), int(box_list[j][1])), (int(box_list[j][2]), int(box_list[i][3])), (0, 255, 255), 2)
