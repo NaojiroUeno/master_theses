@@ -261,7 +261,7 @@ class YOLOv7_DeepSORT:
                                 break
 
                 for l in range(len(group)):
-                  if group[l][2] > 10:
+                  if group[l][2] > 8:
                     flag = True
                     if len(Group) == 0:
                       tmp = [group[l][0], group[l][1]]
@@ -294,17 +294,31 @@ class YOLOv7_DeepSORT:
                   for i in range(len(Group)):
                     for j in range(len(delta)):
                       if Group[i][0] == delta[j][2]: # Groupの1つ目のIDの照合
-                        for k in range(i + 1, len(delta)):
+                        for k in range(j + 1, len(delta)):
                           if Group[i][1] == delta[k][2]: # Groupの2つ目のIDの照合
-                            if abs(delta[j][0] - delta[k][0]) > 2.0 or abs(delta[j][1] - delta[k][1]) > 2.0:
+                            if abs(delta[j][0] - delta[k][0]) >= 2.0 or abs(delta[j][1] - delta[k][1]) >= 2.0:
                               if (delta[j][0] != 0.0 and delta[j][1] != 0.0) and (delta[k][0] != 0.0 and delta[k][1] != 0.0):
-                                print("---------------------------------------")
+                                print("***************************************")
                                 print("ID '" + str(Group[i][0]) + "' and ID '" + str(Group[i][1]) + "' aren't group!")
-                                print("---------------------------------------")
+                                print("***************************************")
                                 tmp = [Group[i][0], Group[i][1]]
-                                not_group.append(tmp)
+                                flag = True
+                                if len(not_group) == 0:
+                                  not_group.append(tmp)
+                                  flag = False
+                                else:
+                                  for x in range(len(not_group)):
+                                    if tmp == not_group[x]:
+                                      flag = False
+                                      break
+                                if flag == True:
+                                  not_group.append(tmp)
+                  #list(set(not_group))
+                  print("------------------------------------")
+                  print("group:  ", Group)
                   print("not group:  ", not_group)
-
+                  print("------------------------------------")
+                  
                 ########### ここにcv.rectangleでグループを囲む記述を書く ############
                 flag_not = False
                 for i in range(len(box_list) - 1):
@@ -320,7 +334,7 @@ class YOLOv7_DeepSORT:
                             flag_not = True
                 
                         if flag_not == False:
-                          if abs(box_list[i][0] - box_list[j][0]) < 50 and abs(box_list[i][1] - box_list[j][1]) < 100: # 大きすぎる矩形を防止
+                          #if abs(box_list[i][0] - box_list[j][0]) < 50 and abs(box_list[i][1] - box_list[j][1]) < 100: # 大きすぎる矩形を防止
                             if int(box_list[i][0]) < int(box_list[j][0]): # box_list[i]がbox_list[j]より左にあるとき
                               if int(box_list[i][1]) > int(box_list[j][1]): # box_list[i]がbox_list[j]より下にあるとき
                                 cv2.rectangle(frame, (int(box_list[i][0]), int(box_list[j][1])), (int(box_list[j][2]), int(box_list[i][3])), (0, 255, 255), 2)
@@ -331,6 +345,8 @@ class YOLOv7_DeepSORT:
                                 cv2.rectangle(frame, (int(box_list[j][0]), int(box_list[j][1])), (int(box_list[i][2]), int(box_list[i][3])), (0, 255, 255), 2)
                               else:
                                 cv2.rectangle(frame, (int(box_list[j][0]), int(box_list[i][1])), (int(box_list[i][2]), int(box_list[j][3])), (0, 255, 255), 2)
+                        else:
+                          flag_not = False
 
             if verbose >= 1:
                 fps = 1.0 / (time.time() - start_time) # calculate frames per second of running detections
@@ -354,5 +370,10 @@ class YOLOv7_DeepSORT:
         ani = animation.ArtistAnimation(fig, ims, interval=50)
         ani.save('anim.mp4', writer="ffmpeg")
         plt.show()
+
+        print()
+        print("++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        print("Group :  ", Group)
+        print("Not Group : ", not_group)
         
         cv2.destroyAllWindows()
