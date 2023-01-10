@@ -93,6 +93,7 @@ class YOLOv7_DeepSORT:
 
 
     def track_video(self,video:str, output:str, skip_frames:int=0, show_live:bool=False, count_objects:bool=False, verbose:int = 0):
+        print("test")
         '''
         Track any given webcam or video
         args: 
@@ -325,6 +326,10 @@ class YOLOv7_DeepSORT:
                   for j in range(i + 1, len(box_list)):
                     for k in range(len(Group)):
                       if Group[k][0] == box_list[i][4] and Group[k][1] == box_list[j][4]:
+                        if abs(box_list[i][0] - box_list[j][0]) > 50 or abs(box_list[i][1] - box_list[j][1]) > 50:
+                          tmp = [Group[k][0], Group[k][1]]
+                          not_group.append(tmp)
+  
                         for l in range(len(not_group)):
                           ###############################################
                           ################# ここから下 ###################
@@ -332,9 +337,10 @@ class YOLOv7_DeepSORT:
                           if Group[k] == not_group[l]: # 現在着目しているGroup[k]がnot_groupに含まれていないか確認する
                             print(not_group[l])
                             flag_not = True
+                            break
                 
                         if flag_not == False:
-                          if abs(box_list[i][0] - box_list[j][0]) < 50 and abs(box_list[i][1] - box_list[j][1]) < 100: # 大きすぎる矩形を防止
+                          #if abs(box_list[i][0] - box_list[j][0]) < 50 and abs(box_list[i][1] - box_list[j][1]) < 100: # 大きすぎる矩形を防止
                             if int(box_list[i][0]) < int(box_list[j][0]): # box_list[i]がbox_list[j]より左にあるとき
                               if int(box_list[i][1]) > int(box_list[j][1]): # box_list[i]がbox_list[j]より下にあるとき
                                 cv2.rectangle(frame, (int(box_list[i][0]), int(box_list[j][1])), (int(box_list[j][2]), int(box_list[i][3])), (0, 255, 255), 2)
