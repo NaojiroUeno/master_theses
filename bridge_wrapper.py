@@ -32,18 +32,6 @@ from detection_helpers import *
 config = ConfigProto()
 config.gpu_options.allow_growth = True
 
-# カメラの視野角（水平方向）
-#fov = 90
-fov = 50
-# スクリーンの画素数（横）
-#pw = 1438
-pw = 1280
-# スクリーンの画素数（縦）
-#ph = 808
-ph = 720
-# カメラ情報（内部パラメータ）
-cam_info = (fov, pw, ph)
-
 import numpy as np
 from numpy import sin, cos, tan
 
@@ -63,8 +51,6 @@ def calc_K(fov_x, pixel_w, pixel_h, cx=None, cy=None):
     ])
 
     return K
-
-K = calc_K(*cam_info)
 
 class YOLOv7_DeepSORT:
     '''
@@ -93,7 +79,19 @@ class YOLOv7_DeepSORT:
 
 
     def track_video(self,video:str, output:str, skip_frames:int=0, show_live:bool=False, count_objects:bool=False, verbose:int = 0):
-        print("test")
+        # サンプル動画ファイル
+        videoPath = video
+        cap = cv2.VideoCapture(videoPath)
+        # カメラの視野角（水平方向）
+        fov = 50
+        # スクリーンの画素数（横）
+        pw = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        # スクリーンの画素数（縦）
+        ph = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        # カメラ情報（内部パラメータ）
+        cam_info = (fov, pw, ph)
+
+        K = calc_K(*cam_info)
         '''
         Track any given webcam or video
         args: 
@@ -331,9 +329,6 @@ class YOLOv7_DeepSORT:
                           not_group.append(tmp)
   
                         for l in range(len(not_group)):
-                          ###############################################
-                          ################# ここから下 ###################
-                          ###############################################
                           if Group[k] == not_group[l]: # 現在着目しているGroup[k]がnot_groupに含まれていないか確認する
                             print(not_group[l])
                             flag_not = True
