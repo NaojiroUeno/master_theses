@@ -34,6 +34,7 @@ config.gpu_options.allow_growth = True
 
 import numpy as np
 from numpy import sin, cos, tan
+from scipy.spatial import distance
 
 def calc_K(fov_x, pixel_w, pixel_h, cx=None, cy=None):
     if cx is None:
@@ -79,6 +80,7 @@ class YOLOv7_DeepSORT:
 
 
     def track_video(self,video:str, output:str, skip_frames:int=0, show_live:bool=False, count_objects:bool=False, verbose:int = 0):
+        print("test")
         # サンプル動画ファイル
         videoPath = video
         cap = cv2.VideoCapture(videoPath)
@@ -228,8 +230,9 @@ class YOLOv7_DeepSORT:
                 # とりあえずここで座標間距離でグループを発見
                 for i in range(len(coord_list) - 1):
                   for j in range(i + 1, len(coord_list)):
-                    if abs(coord_list[i][0] - coord_list[j][0]) < 2.5:
-                      if abs(coord_list[i][1] - coord_list[j][1]) < 2.5:
+                      tmp1 = [coord_list[i][0], coord_list[i][1]]
+                      tmp2 = [coord_list[j][0], coord_list[j][1]]
+                      if distance.euclidean(tmp1, tmp2) < 5:
                         if len(group) == 0:
                           tmp = [coord_list[i][2], coord_list[j][2], 1]
                           group.append(tmp)
@@ -295,7 +298,7 @@ class YOLOv7_DeepSORT:
                       if Group[i][0] == delta[j][2]: # Groupの1つ目のIDの照合
                         for k in range(j + 1, len(delta)):
                           if Group[i][1] == delta[k][2]: # Groupの2つ目のIDの照合
-                            if abs(delta[j][0] - delta[k][0]) >= 2.0 or abs(delta[j][1] - delta[k][1]) >= 2.0:
+                            if abs(delta[j][0] - delta[k][0]) >= 7.0 or abs(delta[j][1] - delta[k][1]) >= 7.0:
                               if (delta[j][0] != 0.0 and delta[j][1] != 0.0) and (delta[k][0] != 0.0 and delta[k][1] != 0.0):
                                 print("***************************************")
                                 print("ID '" + str(Group[i][0]) + "' and ID '" + str(Group[i][1]) + "' aren't group!")
@@ -330,7 +333,7 @@ class YOLOv7_DeepSORT:
   
                         for l in range(len(not_group)):
                           if Group[k] == not_group[l]: # 現在着目しているGroup[k]がnot_groupに含まれていないか確認する
-                            print(not_group[l])
+                            #print(not_group[l])
                             flag_not = True
                             break
                 
@@ -365,7 +368,7 @@ class YOLOv7_DeepSORT:
                 cv2.imshow("Output Video", result)
                 if cv2.waitKey(1) & 0xFF == ord('q'): break
             
-            if frame_num % 5 == 4:
+            if frame_num % 5 == 1:
               coord_old_list = center
 
         ani = animation.ArtistAnimation(fig, ims, interval=50)
