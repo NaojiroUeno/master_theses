@@ -121,7 +121,7 @@ class YOLOv7_DeepSORT:
         ims = []
         group = []
         Group = []
-        coord_old_list = []
+        center_old = []
         not_group = []
         Not_group = []
         while True: # while video is running
@@ -289,9 +289,9 @@ class YOLOv7_DeepSORT:
                 delta = []
                 if frame_num % 5 == 0:
                   for i in range(len(center)):
-                    for j in range(len(coord_old_list)):
-                      if center[i][2] == coord_old_list[j][2]: # IDの照合
-                        tmp = [center[i][0] - coord_old_list[j][0], center[i][1] - coord_old_list[j][1], center[i][2]]
+                    for j in range(len(center_old)):
+                      if center[i][2] == center_old[j][2]: # IDの照合
+                        tmp = [center[i][0] - center_old[j][0], center[i][1] - center_old[j][1], center[i][2]]
                         delta.append(tmp)
                   print(delta)
                 
@@ -301,7 +301,7 @@ class YOLOv7_DeepSORT:
                       if Group[i][0] == delta[j][2]: # Groupの1つ目のIDの照合
                         for k in range(j + 1, len(delta)):
                           if Group[i][1] == delta[k][2]: # Groupの2つ目のIDの照合
-                            if abs(delta[j][0] - delta[k][0]) > 7.0 or abs(delta[j][1] - delta[k][1]) > 7.0:
+                            if abs(delta[j][0] - delta[k][0]) >= 7.0 or abs(delta[j][1] - delta[k][1]) >= 7.0:
                               if (delta[j][0] != 0.0 and delta[j][1] != 0.0) and (delta[k][0] != 0.0 and delta[k][1] != 0.0):
                                 print("***************************************")
                                 print("ID '" + str(Group[i][0]) + "' and ID '" + str(Group[i][1]) + "' aren't group!")
@@ -318,16 +318,24 @@ class YOLOv7_DeepSORT:
                                       break
                                 if flag == True:
                                   not_group.append(tmp)
-                  
+                '''  
                 for i in range(len(box_list) - 1):
                   for j in range(i + 1, len(box_list)):
                     for k in range(len(Group)):
                       if Group[k][0] == box_list[i][4] and Group[k][1] == box_list[j][4]:
-                        print(Group[k][0], " and ", Group[k][1], "' s  vector: ", abs(box_list[i][0] - box_list[j][0]), abs(box_list[i][1] - box_list[j][1]))
+                        #print(Group[k][0], " and ", Group[k][1], "' s  vector: ", abs(box_list[i][0] - box_list[j][0]), abs(box_list[i][1] - box_list[j][1]))
                         if abs(box_list[i][0] - box_list[j][0]) > 50 or abs(box_list[i][1] - box_list[j][1]) > 50:
                           tmp = [Group[k][0], Group[k][1]]
                           not_group.append(tmp)
-                
+                '''
+                for i in range(len(coord_list) - 1):
+                  for j in range(i + 1, len(coord_list)):
+                    for k in range(len(Group)):
+                      if Group[k][0] == coord_list[i][2] and Group[k][1] == coord_list[j][2]:
+                        if abs(coord_list[i][0] - coord_list[j][0]) > 4.0 or abs(coord_list[i][1] - coord_list[j][1]) > 4.0:
+                          tmp = [Group[k][0], Group[k][1]]
+                          not_group.append(tmp)
+                          print(tmp)
                 ###############以下でリストの簡約化 #################
                 ###### not_group内の重複を削除 ######
                 Not_group = []
@@ -394,7 +402,7 @@ class YOLOv7_DeepSORT:
                 if cv2.waitKey(1) & 0xFF == ord('q'): break
             
             if frame_num % 5 == 1:
-              coord_old_list = center
+              center_old = center
 
         ani = animation.ArtistAnimation(fig, ims, interval=50)
         ani.save('anim.mp4', writer="ffmpeg")
