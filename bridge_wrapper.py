@@ -281,7 +281,7 @@ class YOLOv7_DeepSORT:
                       Group.append(tmp)
                       print("ID '" + str(group[l][0]) + "' and ID '" + str(group[l][1]) + "' are group!")
 
-                print(Group)
+                #print(Group)
 
                 
 
@@ -301,7 +301,7 @@ class YOLOv7_DeepSORT:
                       if Group[i][0] == delta[j][2]: # Groupの1つ目のIDの照合
                         for k in range(j + 1, len(delta)):
                           if Group[i][1] == delta[k][2]: # Groupの2つ目のIDの照合
-                            if abs(delta[j][0] - delta[k][0]) >= 7.0 or abs(delta[j][1] - delta[k][1]) >= 7.0:
+                            if abs(delta[j][0] - delta[k][0]) > 7.0 or abs(delta[j][1] - delta[k][1]) > 7.0:
                               if (delta[j][0] != 0.0 and delta[j][1] != 0.0) and (delta[k][0] != 0.0 and delta[k][1] != 0.0):
                                 print("***************************************")
                                 print("ID '" + str(Group[i][0]) + "' and ID '" + str(Group[i][1]) + "' aren't group!")
@@ -323,10 +323,12 @@ class YOLOv7_DeepSORT:
                   for j in range(i + 1, len(box_list)):
                     for k in range(len(Group)):
                       if Group[k][0] == box_list[i][4] and Group[k][1] == box_list[j][4]:
+                        print(Group[k][0], " and ", Group[k][1], "' s  vector: ", abs(box_list[i][0] - box_list[j][0]), abs(box_list[i][1] - box_list[j][1]))
                         if abs(box_list[i][0] - box_list[j][0]) > 50 or abs(box_list[i][1] - box_list[j][1]) > 50:
                           tmp = [Group[k][0], Group[k][1]]
                           not_group.append(tmp)
                 
+                ###############以下でリストの簡約化 #################
                 ###### not_group内の重複を削除 ######
                 Not_group = []
                 for n_elem in not_group:
@@ -344,6 +346,7 @@ class YOLOv7_DeepSORT:
                     new_group.append(Group[i])
                   else:
                     flag = False
+                #####################################################
 
                 if frame_num % 5 == 0:
                   print("------------------------------------")
@@ -354,6 +357,8 @@ class YOLOv7_DeepSORT:
                       Not_group.append(n_elem)
                   print("not_group:  ", Not_group)
                   print("------------------------------------")
+
+                print(new_group)
                   
                 ########### ここにcv.rectangleでグループを囲む記述を書く ############
                 flag_not = False
@@ -361,16 +366,16 @@ class YOLOv7_DeepSORT:
                   for j in range(i + 1, len(box_list)):
                     for k in range(len(new_group)):
                       if new_group[k][0] == box_list[i][4] and new_group[k][1] == box_list[j][4]:
-                          if int(box_list[i][0]) < int(box_list[j][0]): # box_list[i]がbox_list[j]より左にあるとき
-                            if int(box_list[i][1]) > int(box_list[j][1]): # box_list[i]がbox_list[j]より下にあるとき
-                              cv2.rectangle(frame, (int(box_list[i][0]), int(box_list[j][1])), (int(box_list[j][2]), int(box_list[i][3])), (0, 255, 255), 2)
-                            else:
-                              cv2.rectangle(frame, (int(box_list[i][0]), int(box_list[i][1])), (int(box_list[j][2]), int(box_list[j][3])), (0, 255, 255), 2)
+                        if int(box_list[i][0]) < int(box_list[j][0]): # box_list[i]がbox_list[j]より左にあるとき
+                          if int(box_list[i][1]) > int(box_list[j][1]): # box_list[i]がbox_list[j]より下にあるとき
+                            cv2.rectangle(frame, (int(box_list[i][0]), int(box_list[j][1])), (int(box_list[j][2]), int(box_list[i][3])), (0, 255, 255), 2)
                           else:
-                            if int(box_list[i][1]) > int(box_list[j][1]): # box_list[i]がbox_list[j]より下にあるとき
-                              cv2.rectangle(frame, (int(box_list[j][0]), int(box_list[j][1])), (int(box_list[i][2]), int(box_list[i][3])), (0, 255, 255), 2)
-                            else:
-                              cv2.rectangle(frame, (int(box_list[j][0]), int(box_list[i][1])), (int(box_list[i][2]), int(box_list[j][3])), (0, 255, 255), 2)
+                            cv2.rectangle(frame, (int(box_list[i][0]), int(box_list[i][1])), (int(box_list[j][2]), int(box_list[j][3])), (0, 255, 255), 2)
+                        else:
+                          if int(box_list[i][1]) > int(box_list[j][1]): # box_list[i]がbox_list[j]より下にあるとき
+                            cv2.rectangle(frame, (int(box_list[j][0]), int(box_list[j][1])), (int(box_list[i][2]), int(box_list[i][3])), (0, 255, 255), 2)
+                          else:
+                            cv2.rectangle(frame, (int(box_list[j][0]), int(box_list[i][1])), (int(box_list[i][2]), int(box_list[j][3])), (0, 255, 255), 2)
             
             if verbose >= 1:
                 fps = 1.0 / (time.time() - start_time) # calculate frames per second of running detections
@@ -397,7 +402,7 @@ class YOLOv7_DeepSORT:
 
         print()
         print("++++++++++++++++++++++++++++++++++++++++++++++++++++")
-        print("Group :  ", Group)
+        print("Group :  ", new_group)
         print("Not Group : ", Not_group)
         
         cv2.destroyAllWindows()
