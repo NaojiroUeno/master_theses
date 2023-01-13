@@ -301,7 +301,7 @@ class YOLOv7_DeepSORT:
                       if Group[i][0] == delta[j][2]: # Groupの1つ目のIDの照合
                         for k in range(j + 1, len(delta)):
                           if Group[i][1] == delta[k][2]: # Groupの2つ目のIDの照合
-                            if abs(delta[j][0] - delta[k][0]) >= 7.0 or abs(delta[j][1] - delta[k][1]) >= 7.0:
+                            if abs(delta[j][0] - delta[k][0]) > 7.0 or abs(delta[j][1] - delta[k][1]) > 7.0:
                               if (delta[j][0] != 0.0 and delta[j][1] != 0.0) and (delta[k][0] != 0.0 and delta[k][1] != 0.0):
                                 print("***************************************")
                                 print("ID '" + str(Group[i][0]) + "' and ID '" + str(Group[i][1]) + "' aren't group!")
