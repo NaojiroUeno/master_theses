@@ -124,6 +124,7 @@ class YOLOv7_DeepSORT:
         center_old = []
         not_group = []
         Not_group = []
+        vector = []
         while True: # while video is running
             return_value, frame = vid.read()
             if not return_value:
@@ -192,7 +193,6 @@ class YOLOv7_DeepSORT:
                     continue 
                 bbox = track.to_tlbr()
                 class_name = track.get_class()
-        
                 color = colors[int(track.track_id) % len(colors)]  # draw bbox on screen
                 color = [i * 255 for i in color]
                 cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), color, 2)
@@ -280,9 +280,6 @@ class YOLOv7_DeepSORT:
                       tmp = [group[l][0], group[l][1]]
                       Group.append(tmp)
                       print("ID '" + str(group[l][0]) + "' and ID '" + str(group[l][1]) + "' are group!")
-
-                #print(Group)
-
                 
 
                 ## 速度ベクトルを使用してグループ化どうかを判断 ##
@@ -307,35 +304,20 @@ class YOLOv7_DeepSORT:
                                 print("ID '" + str(Group[i][0]) + "' and ID '" + str(Group[i][1]) + "' aren't group!")
                                 print("***************************************")
                                 tmp = [Group[i][0], Group[i][1]]
-                                flag = True
-                                if len(not_group) == 0:
-                                  not_group.append(tmp)
-                                  flag = False
-                                else:
-                                  for x in range(len(not_group)):
-                                    if tmp == not_group[x]:
-                                      flag = False
-                                      break
-                                if flag == True:
-                                  not_group.append(tmp)
-                '''  
-                for i in range(len(box_list) - 1):
-                  for j in range(i + 1, len(box_list)):
-                    for k in range(len(Group)):
-                      if Group[k][0] == box_list[i][4] and Group[k][1] == box_list[j][4]:
-                        #print(Group[k][0], " and ", Group[k][1], "' s  vector: ", abs(box_list[i][0] - box_list[j][0]), abs(box_list[i][1] - box_list[j][1]))
-                        if abs(box_list[i][0] - box_list[j][0]) > 50 or abs(box_list[i][1] - box_list[j][1]) > 50:
-                          tmp = [Group[k][0], Group[k][1]]
-                          not_group.append(tmp)
-                '''
+                                not_group.append(tmp)
+                
+                ##### 座標が離れたペアをグループから外す ######
                 for i in range(len(coord_list) - 1):
                   for j in range(i + 1, len(coord_list)):
                     for k in range(len(Group)):
                       if Group[k][0] == coord_list[i][2] and Group[k][1] == coord_list[j][2]:
-                        if abs(coord_list[i][0] - coord_list[j][0]) > 4.0 or abs(coord_list[i][1] - coord_list[j][1]) > 4.0:
+                        tmp1 = [coord_list[i][0], coord_list[i][1]]
+                        tmp2 = [coord_list[j][0], coord_list[j][1]]
+                        if distance.euclidean(tmp1, tmp2) > 4.0:
                           tmp = [Group[k][0], Group[k][1]]
                           not_group.append(tmp)
-                          print(tmp)
+                          #print(tmp)
+
                 ###############以下でリストの簡約化 #################
                 ###### not_group内の重複を削除 ######
                 Not_group = []
@@ -366,7 +348,7 @@ class YOLOv7_DeepSORT:
                   print("not_group:  ", Not_group)
                   print("------------------------------------")
 
-                print(new_group)
+                #print(new_group)
                   
                 ########### ここにcv.rectangleでグループを囲む記述を書く ############
                 flag_not = False
