@@ -80,7 +80,11 @@ class YOLOv7_DeepSORT:
 
 
     def track_video(self,video:str, output:str, skip_frames:int=0, show_live:bool=False, count_objects:bool=False, verbose:int = 0):
-        # サンプル動画ファイル
+        cap = cv2.VideoCapture(video)
+        # 横幅
+        #print(f"width: {cap.get(cv2.CAP_PROP_FRAME_WIDTH)}")
+        # 高さ
+        #print(f"height: {cap.get(cv2.CAP_PROP_FRAME_HEIGHT)}")
         videoPath = video
         cap = cv2.VideoCapture(videoPath)
         # カメラの視野角（水平方向）
@@ -263,7 +267,7 @@ class YOLOv7_DeepSORT:
                                 break
 
                 for l in range(len(group)):
-                  if group[l][2] > 8:
+                  if group[l][2] > 25:
                     flag = True
                     if len(Group) == 0:
                       tmp = [group[l][0], group[l][1]]
@@ -298,7 +302,7 @@ class YOLOv7_DeepSORT:
                       if Group[i][0] == delta[j][2]: # Groupの1つ目のIDの照合
                         for k in range(j + 1, len(delta)):
                           if Group[i][1] == delta[k][2]: # Groupの2つ目のIDの照合
-                            if abs(delta[j][0] - delta[k][0]) > 5.0 or abs(delta[j][1] - delta[k][1]) > 5.0:
+                            if abs(delta[j][0] - delta[k][0]) > 7.0 or abs(delta[j][1] - delta[k][1]) > 7.0:
                               if (delta[j][0] != 0.0 and delta[j][1] != 0.0) and (delta[k][0] != 0.0 and delta[k][1] != 0.0):
                                 if len(vector) == 0:
                                   tmp = [Group[i][0], Group[i][1], 1]
@@ -336,10 +340,6 @@ class YOLOv7_DeepSORT:
                                         break
 
 
-
-
-                          
-                
                 ##### 座標が離れたペアをグループから外す ######
                 for i in range(len(coord_list) - 1):
                   for j in range(i + 1, len(coord_list)):
@@ -427,6 +427,6 @@ class YOLOv7_DeepSORT:
         print()
         print("++++++++++++++++++++++++++++++++++++++++++++++++++++")
         print("Group :  ", new_group)
-        print("Not Group : ", Not_group)
+        print("Group length :  ", len(new_group))
         
         cv2.destroyAllWindows()
